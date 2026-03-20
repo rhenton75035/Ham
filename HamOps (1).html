@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HamOps</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Oxanium:wght@400;600;700&display=swap');
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --g:#00e87a;--gd:#00b85e;--gdk:#003d20;
+      --am:#ffaa00;--amd:#cc8800;--amdk:#3a2800;
+      --re:#ff4c4c;--redk:#3d0a0a;
+      --bg:#080d09;--s1:#0d1510;--s2:#121c13;--s3:#182018;
+      --br:#1c2e1c;--brl:#274827;--tx:#b5d6b5;--txd:#577557;
+      --mono:'Share Tech Mono',monospace;--disp:'Oxanium',sans-serif;
+    }
+    html,body{height:100%;background:var(--bg)}
+    body{font-family:var(--mono);color:var(--tx);min-height:100vh}
+    .app{background:var(--bg);border:1px solid var(--brl);border-radius:8px;overflow:hidden;max-width:960px;margin:20px auto}
+    .hdr{background:var(--s1);border-bottom:1px solid var(--brl);padding:10px 18px;display:flex;align-items:center;gap:14px}
+    .logo{font-family:var(--disp);font-size:17px;font-weight:700;color:var(--g);letter-spacing:3px}
+    .logo em{color:var(--am);font-style:normal}
+    .sbars{display:flex;gap:2px;align-items:flex-end;height:14px}
+    .sbars span{width:3px;background:var(--g);border-radius:1px;animation:sp 1.6s ease-in-out infinite}
+    .sbars span:nth-child(1){height:4px;animation-delay:0s}
+    .sbars span:nth-child(2){height:7px;animation-delay:.12s}
+    .sbars span:nth-child(3){height:10px;animation-delay:.24s}
+    .sbars span:nth-child(4){height:13px;animation-delay:.36s}
+    @keyframes sp{0%,100%{opacity:1}50%{opacity:.2}}
+    .utc{margin-left:auto;font-size:10px;color:var(--txd)}
+    .utc b{color:var(--g);font-weight:400}
+    .tabs{display:flex;background:var(--s1);border-bottom:1px solid var(--brl);overflow-x:auto}
+    .tab{padding:9px 16px;font-size:11px;font-family:var(--mono);color:var(--txd);cursor:pointer;border:none;background:transparent;white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s;letter-spacing:.8px}
+    .tab:hover{color:var(--g)}.tab.on{color:var(--g);border-bottom-color:var(--g);background:var(--s2)}
+    .body{padding:18px}
+    .pnl{display:none}.pnl.on{display:block}
+    .sec{font-family:var(--disp);font-size:10px;color:var(--gd);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;padding-bottom:5px;border-bottom:1px solid var(--br)}
+    label{font-size:10px;color:var(--txd);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:5px}
+    input[type=number],input[type=text],select{background:var(--s2);border:1px solid var(--brl);color:var(--g);font-family:var(--mono);font-size:13px;padding:7px 10px;border-radius:4px;width:100%;outline:none}
+    input:focus,select:focus{border-color:var(--g)}
+    .btn{background:var(--gdk);border:1px solid var(--gd);color:var(--g);font-family:var(--mono);font-size:11px;padding:6px 14px;border-radius:4px;cursor:pointer;transition:all .15s;letter-spacing:.5px}
+    .btn:hover{background:var(--g);color:var(--bg)}.btn:disabled{opacity:.4;cursor:default}
+    .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .rbox{background:var(--s2);border:1px solid var(--brl);border-radius:4px;padding:12px}
+    .rv{font-size:20px;color:var(--am)}.rl{font-size:10px;color:var(--txd);margin-top:3px}
+    .row{margin-bottom:14px}
+    .good{color:var(--g)}.warn{color:var(--am)}.bad{color:var(--re)}
+    /* solar */
+    .solar-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+    .scard{background:var(--s2);border:1px solid var(--brl);border-radius:6px;padding:10px;text-align:center}
+    .scard-val{font-family:var(--disp);font-size:22px;font-weight:600;color:var(--am)}
+    .scard-lbl{font-size:9px;color:var(--txd);letter-spacing:1px;text-transform:uppercase;margin-top:2px}
+    .scard-st{font-size:10px;margin-top:4px;font-weight:600}
+    .band-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:12px}
+    .band-nm{min-width:46px;color:var(--am);font-weight:600}
+    .bar-bg{flex:1;background:var(--s3);height:9px;border-radius:5px;overflow:hidden;border:1px solid var(--br)}
+    .bar-fill{height:100%;border-radius:5px;transition:width .6s}
+    .band-pct{min-width:34px;text-align:right;font-size:11px;color:var(--tx)}
+    .band-cd{min-width:48px;font-size:10px;text-align:right}
+    .noise-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+    .ncard{background:var(--s2);border:1px solid var(--brl);border-radius:6px;padding:12px;text-align:center}
+    .ncard-band{font-family:var(--disp);font-size:15px;font-weight:600;color:var(--g)}
+    .ncard-s{font-size:22px;font-weight:700;margin:4px 0}
+    .ncard-db{font-size:10px;color:var(--txd)}
+    .ncard-lv{font-size:10px;margin-top:4px;font-weight:600}
+    .note{background:var(--amdk);border:1px solid var(--amd);border-radius:4px;padding:8px 12px;font-size:11px;color:var(--am);margin-bottom:12px}
+    /* MUF */
+    .muf-main{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}
+    .muf-card{background:var(--s2);border:1px solid var(--brl);border-radius:6px;padding:14px;text-align:center}
+    .muf-val{font-family:var(--disp);font-size:30px;font-weight:700;line-height:1}
+    .muf-unit{font-size:12px;color:var(--txd);margin-top:2px}
+    .muf-lbl{font-size:9px;color:var(--txd);letter-spacing:1.5px;text-transform:uppercase;margin-top:6px}
+    .muf-sub{font-size:10px;margin-top:4px}
+    .band-muf-grid{display:grid;grid-template-columns:repeat(9,1fr);gap:4px;margin-bottom:6px}
+    .bmuf-cell{background:var(--s2);border:1px solid var(--brl);border-radius:4px;padding:6px 4px;text-align:center}
+    .bmuf-name{font-size:9px;color:var(--txd);margin-bottom:3px;letter-spacing:.5px}
+    .bmuf-dot{width:10px;height:10px;border-radius:50%;margin:0 auto 3px}
+    .bmuf-status{font-size:8px;font-weight:600;letter-spacing:.5px}
+    .muf-scale-bar{height:6px;border-radius:3px;background:linear-gradient(to right,#ff4c4c,#ffaa00,#00e87a);border:1px solid var(--br)}
+    .muf-marker{position:relative;height:20px;margin-top:4px}
+    .muf-needle{position:absolute;top:0;width:2px;height:16px;background:white;border-radius:1px;transform:translateX(-50%);transition:left .6s}
+    .muf-needle-lbl{position:absolute;top:18px;font-size:9px;color:var(--tx);transform:translateX(-50%);white-space:nowrap}
+    /* DX spots */
+    .dx-band-section{margin-bottom:16px}
+    .dx-band-header{font-family:var(--disp);font-size:11px;font-weight:600;letter-spacing:1.5px;padding:5px 10px;border-radius:4px;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+    .dx-table{width:100%;border-collapse:collapse;font-size:11px}
+    .dx-table th{font-size:9px;color:var(--txd);letter-spacing:1px;text-transform:uppercase;padding:4px 8px;border-bottom:1px solid var(--br);text-align:left;font-weight:400}
+    .dx-table td{padding:5px 8px;border-bottom:1px solid var(--br);vertical-align:middle}
+    .dx-table tr:hover td{background:var(--s2)}
+    .dx-call{color:var(--g);font-weight:600;font-size:12px}
+    .dx-freq{color:var(--am);font-size:12px}
+    .dx-mode{font-size:10px;padding:2px 6px;border-radius:3px;font-weight:600}
+    .mode-cw{background:#003a2a;color:#00e87a;border:1px solid #005a40}
+    .mode-ssb{background:#2a1800;color:#ffaa00;border:1px solid #5a3800}
+    .mode-ft8{background:#001a3a;color:#4488ff;border:1px solid #003080}
+    .mode-ft4{background:#0a1a3a;color:#66aaff;border:1px solid #003080}
+    .mode-rtty{background:#2a0020;color:#ff88ee;border:1px solid #600050}
+    .mode-psk{background:#1a2000;color:#aaee44;border:1px solid #384400}
+    .mode-am{background:#2a1500;color:#ff9933;border:1px solid #5a3000}
+    .mode-fm{background:#001a2a;color:#33ccff;border:1px solid #005a80}
+    .mode-other{background:#1a1a1a;color:#888;border:1px solid #333}
+    .dx-spotter{color:var(--txd);font-size:10px}
+    .dx-comment{color:var(--tx);font-size:10px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .dx-age{color:var(--txd);font-size:10px;text-align:right}
+    .dx-empty{color:var(--txd);font-size:11px;padding:12px 8px;text-align:center}
+    .dx-loading{color:var(--txd);font-size:12px;padding:20px;text-align:center}
+    .pill-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+    .pill{background:transparent;border:1px solid var(--brl);color:var(--txd);font-family:var(--mono);font-size:10px;padding:3px 10px;border-radius:12px;cursor:pointer;transition:all .15s;letter-spacing:.5px}
+    .pill:hover{border-color:var(--g);color:var(--g)}.pill.on{background:var(--gdk);border-color:var(--gd);color:var(--g)}
+    /* grid */
+    .grid-big{font-family:var(--disp);font-size:34px;font-weight:700;color:var(--g);letter-spacing:4px;text-align:center;padding:16px 0 4px}
+    .grid-sub{font-size:10px;color:var(--txd);text-align:center;margin-bottom:10px}
+    /* callsign */
+    .cs-search-row{display:flex;gap:10px;align-items:flex-end;margin-bottom:16px}
+    .cs-search-row input{flex:1;font-size:16px;padding:9px 12px;letter-spacing:2px;text-transform:uppercase}
+    .cs-search-row .btn{padding:9px 20px;font-size:12px}
+    .cs-card{background:var(--s2);border:1px solid var(--brl);border-radius:8px;overflow:hidden;margin-top:4px}
+    .cs-card-top{padding:18px 20px;display:flex;align-items:flex-start;gap:18px}
+    .cs-avatar{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-size:20px;font-weight:700;flex-shrink:0;border:2px solid var(--brl)}
+    .cs-callsign{font-family:var(--disp);font-size:28px;font-weight:700;color:var(--g);letter-spacing:3px;line-height:1}
+    .cs-name{font-size:14px;color:var(--tx);margin-top:5px}
+    .cs-class-badge{display:inline-block;font-size:10px;font-weight:600;padding:3px 10px;border-radius:12px;margin-top:6px;letter-spacing:.5px}
+    .class-extra{background:#003a20;color:var(--g);border:1px solid #005a30}
+    .class-general{background:#2a1800;color:#ffaa00;border:1px solid #5a3000}
+    .class-technician{background:#001a3a;color:#4488ff;border:1px solid #003080}
+    .class-novice,.class-other{background:#1a1a1a;color:#888;border:1px solid #333}
+    .cs-status-valid{color:var(--g);font-size:11px;font-weight:600}
+    .cs-status-expired{color:var(--re);font-size:11px;font-weight:600}
+    .cs-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--br)}
+    .cs-field{padding:10px 18px;border-bottom:1px solid var(--br)}
+    .cs-field:nth-child(odd){border-right:1px solid var(--br)}
+    .cs-field-label{font-size:9px;color:var(--txd);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px}
+    .cs-field-val{font-size:13px;color:var(--tx)}
+    .cs-field-val.mono{font-family:var(--mono);color:var(--am)}
+    .cs-links{padding:12px 18px;display:flex;gap:8px;flex-wrap:wrap;background:var(--s3)}
+    .cs-link{font-size:10px;color:var(--gd);text-decoration:none;border:1px solid var(--brl);padding:4px 10px;border-radius:4px;transition:all .15s;cursor:pointer}
+    .cs-link:hover{color:var(--g);border-color:var(--g)}
+    .cs-empty{color:var(--txd);font-size:12px;padding:30px;text-align:center;line-height:1.8}
+    .cs-error{background:var(--redk);border:1px solid var(--re);border-radius:6px;padding:14px 18px;font-size:12px;color:var(--re);margin-top:4px}
+    .cs-loading{color:var(--txd);font-size:12px;padding:30px;text-align:center}
+    .cs-intl-note{background:var(--amdk);border:1px solid var(--amd);border-radius:6px;padding:12px 16px;font-size:11px;color:var(--am);margin-top:4px;line-height:1.7}
+    /* ── BAND PLAN ── */
+    .bp-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+    .bp-toolbar select{background:var(--s2);border:1px solid var(--brl);color:var(--g);font-family:var(--mono);font-size:11px;padding:5px 8px;border-radius:4px;outline:none;width:auto}
+    .bp-toolbar select:focus{border-color:var(--g)}
+    .pill-row{display:flex;gap:6px;flex-wrap:wrap}
+    .pill{background:transparent;border:1px solid var(--brl);color:var(--txd);font-family:var(--mono);font-size:10px;padding:3px 10px;border-radius:12px;cursor:pointer;transition:all .15s;letter-spacing:.5px}
+    .pill:hover{border-color:var(--g);color:var(--g)}.pill.on{background:var(--gdk);border-color:var(--gd);color:var(--g)}
+    .legend{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;font-size:10px}
+    .leg-item{display:flex;align-items:center;gap:5px}
+    .leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+    .band-block{margin-bottom:20px}
+    .band-title{font-family:var(--disp);font-size:13px;font-weight:700;letter-spacing:1px;padding:8px 12px;border-radius:6px 6px 0 0;display:flex;align-items:center;justify-content:space-between}
+    .band-title-right{font-size:10px;font-weight:400;opacity:.75}
+    .seg-table{width:100%;border-collapse:collapse;font-size:11px}
+    .seg-table th{font-size:9px;color:var(--txd);letter-spacing:1px;text-transform:uppercase;padding:5px 10px;border-bottom:1px solid var(--br);text-align:left;font-weight:400;background:var(--s2)}
+    .seg-table td{padding:5px 10px;border-bottom:1px solid var(--br);vertical-align:middle;background:var(--s3)}
+    .seg-table tr:last-child td{border-bottom:none}
+    .seg-table tr:hover td{background:var(--s2)}
+    .lic{display:inline-block;font-size:9px;font-weight:600;padding:2px 7px;border-radius:3px;letter-spacing:.5px;white-space:nowrap;margin:1px}
+    .lic-e{background:#003a20;color:#00e87a;border:1px solid #005a30}
+    .lic-g{background:#2a1800;color:#ffaa00;border:1px solid #5a3000}
+    .lic-t{background:#001a3a;color:#4488ff;border:1px solid #003080}
+    .lic-n{background:#1a001a;color:#cc88ff;border:1px solid #400040}
+    .lic-ca{background:#1a1a00;color:#dddd44;border:1px solid #444400}
+    .mode-tag{display:inline-block;font-size:9px;padding:2px 6px;border-radius:3px;margin:1px;font-weight:600}
+    .mt-cw{background:#003a2a;color:#00e87a;border:1px solid #005a40}
+    .mt-ph{background:#2a1800;color:#ffaa00;border:1px solid #5a3800}
+    .mt-dt{background:#001a3a;color:#4488ff;border:1px solid #003080}
+    .mt-ft{background:#0a1a3a;color:#66aaff;border:1px solid #003080}
+    .mt-im{background:#1a0a2e;color:#cc88ff;border:1px solid #400060}
+    .mt-all{background:#1a1a1a;color:#aaa;border:1px solid #333}
+    .pwr{font-size:10px;color:var(--am)}
+    .freq-range{color:var(--g);font-size:11px;white-space:nowrap}
+    .note-box{background:var(--amdk);border:1px solid var(--amd);border-radius:4px;padding:8px 12px;font-size:10px;color:var(--am);margin-top:6px;line-height:1.7}
+    .bc-160{background:#1a0a2e}.bc-80{background:#1a1500}.bc-60{background:#001a0a}
+    .bc-40{background:#0a1500}.bc-30{background:#001a1a}.bc-20{background:#00101a}
+    .bc-17{background:#0a0a1a}.bc-15{background:#1a000a}.bc-12{background:#1a0800}
+    .bc-10{background:#0a1500}.bc-6{background:#001a1a}.bc-2{background:#1a1400}
+    .bc-70{background:#1a0018}.bc-33{background:#001018}.bc-23{background:#0a1800}.bc-13{background:#180a00}
+    .bt-160{color:#cc88ff}.bt-80{color:#ffcc44}.bt-60{color:#44ffaa}.bt-40{color:#88ff44}
+    .bt-30{color:#44ffee}.bt-20{color:#44ccff}.bt-17{color:#8888ff}.bt-15{color:#ff6699}
+    .bt-12{color:#ff9944}.bt-10{color:#66ff88}.bt-6{color:#44ffee}.bt-2{color:#ffff44}
+    .bt-70{color:#ff44ff}.bt-33{color:#44ddff}.bt-23{color:#88ffcc}.bt-13{color:#ffaa66}
+    /* ── MOBILE / IPHONE RESPONSIVE ── */
+    @media(max-width:600px){
+      /* Layout stacking */
+      .g2{grid-template-columns:1fr}
+      .solar-grid{grid-template-columns:repeat(2,1fr)}
+      .muf-main{grid-template-columns:1fr 1fr}
+      .noise-grid{grid-template-columns:1fr}
+      .cs-grid{grid-template-columns:1fr}
+      .cs-field:nth-child(odd){border-right:none}
+      .band-muf-grid{grid-template-columns:repeat(3,1fr)}
+
+      /* Base font — larger for readability */
+      body{font-size:14px}
+      .body{padding:12px}
+
+      /* Header */
+      .logo{font-size:19px}
+      .utc{font-size:12px}
+
+      /* Tabs — taller touch targets, larger text */
+      .tab{font-size:12px;padding:12px 13px;letter-spacing:0}
+
+      /* Section headers */
+      .sec{font-size:12px;letter-spacing:1px;margin-bottom:14px}
+
+      /* Solar cards */
+      .scard{padding:12px 8px}
+      .scard-val{font-size:26px}
+      .scard-lbl{font-size:11px}
+      .scard-st{font-size:12px;margin-top:5px}
+
+      /* MUF cards */
+      .muf-card{padding:12px 8px}
+      .muf-val{font-size:26px}
+      .muf-unit{font-size:13px}
+      .muf-lbl{font-size:11px;letter-spacing:0.5px}
+      .muf-sub{font-size:11px}
+
+      /* Band MUF grid dots */
+      .bmuf-cell{padding:8px 2px}
+      .bmuf-name{font-size:11px}
+      .bmuf-dot{width:12px;height:12px}
+      .bmuf-status{font-size:10px}
+
+      /* Band propagation bars */
+      .band-row{gap:6px;margin-bottom:9px}
+      .band-nm{font-size:13px;min-width:42px}
+      .bar-bg{height:11px}
+      .band-pct{font-size:12px;min-width:32px}
+      .band-cd{font-size:11px;min-width:44px}
+
+      /* Noise cards */
+      .ncard{padding:14px 8px}
+      .ncard-band{font-size:17px}
+      .ncard-s{font-size:26px}
+      .ncard-db{font-size:12px}
+      .ncard-lv{font-size:12px;margin-top:5px}
+
+      /* Summary / note boxes */
+      .rbox{font-size:13px;line-height:1.9}
+      .note{font-size:12px;padding:10px 12px}
+      .note-box{font-size:12px;padding:10px 12px;line-height:1.8}
+
+      /* Refresh row text */
+      #ts,#dx-ts{font-size:11px}
+
+      /* DX Spots — horizontal scroll on narrow screens */
+      #dx-content{overflow-x:auto;-webkit-overflow-scrolling:touch}
+      .dx-table{min-width:520px}
+      .dx-table th{font-size:11px;padding:6px 8px}
+      .dx-table td{font-size:12px;padding:7px 8px}
+      .dx-call{font-size:13px}
+      .dx-freq{font-size:13px}
+      .dx-mode{font-size:11px;padding:3px 7px}
+      .dx-spotter{font-size:11px}
+      .dx-comment{font-size:11px;max-width:110px}
+      .dx-age{font-size:11px}
+      .dx-band-header{padding:7px 10px}
+      .dx-band-header span:first-child{font-size:15px}
+
+      /* Mode filter pills */
+      .pill{font-size:12px;padding:7px 13px}
+
+      /* Callsign */
+      .cs-search-row input{font-size:16px;padding:11px 12px}
+      .cs-search-row .btn{font-size:13px;padding:11px 16px}
+      .cs-card-top{padding:14px}
+      .cs-callsign{font-size:26px;letter-spacing:2px}
+      .cs-name{font-size:15px}
+      .cs-class-badge{font-size:12px;padding:4px 12px}
+      .cs-status-valid,.cs-status-expired{font-size:13px}
+      .cs-field{padding:10px 14px}
+      .cs-field-label{font-size:11px;letter-spacing:0.5px}
+      .cs-field-val{font-size:14px}
+      .cs-link{font-size:12px;padding:7px 12px}
+      .cs-intl-note{font-size:13px;padding:14px}
+      .cs-empty{font-size:13px}
+      .cs-error{font-size:13px}
+
+      /* Freq calc */
+      label{font-size:12px}
+      input[type=number],input[type=text],select{font-size:16px;padding:10px 12px}
+      .rv{font-size:22px}
+      .rl{font-size:12px}
+      #swr-t{font-size:12px;margin-top:8px}
+      #f-band{font-size:13px;padding:10px 12px}
+
+      /* Grid locator */
+      .grid-big{font-size:38px;padding:18px 0 6px}
+      .grid-sub{font-size:12px}
+      .btn{font-size:13px;padding:10px 18px}
+
+      /* Grid distance */
+      #d-km{font-size:20px}
+      #d-mi{font-size:13px}
+
+      /* Band plan — horizontal scroll for wide tables */
+      .bp-toolbar{gap:10px}
+      .bp-toolbar select{font-size:13px;padding:8px 10px}
+      .band-block{overflow-x:auto;-webkit-overflow-scrolling:touch}
+      .seg-table{min-width:480px;font-size:12px}
+      .seg-table th{font-size:11px;padding:6px 10px;letter-spacing:0.5px}
+      .seg-table td{font-size:12px;padding:7px 10px}
+      .freq-range{font-size:12px}
+      .band-title{padding:10px 12px;border-radius:6px 6px 0 0}
+      .band-title span:first-child{font-size:15px}
+      .band-title-right{font-size:11px}
+      .lic{font-size:11px;padding:3px 8px}
+      .mode-tag{font-size:11px;padding:3px 7px}
+      .pwr{font-size:12px}
+      .legend{font-size:12px;gap:10px}
+      .leg-dot{width:12px;height:12px}
+
+      /* Quick ref table */
+      #qr-content table{font-size:13px}
+      #qr-content th{font-size:11px;padding:5px 10px}
+      #qr-content td{padding:7px 10px}
+    }
+
+    /* Slightly looser for iPad */
+    @media(min-width:601px) and (max-width:900px){
+      .seg-table{font-size:12px}
+      .dx-table{font-size:12px}
+      .tab{font-size:12px;padding:10px 14px}
+      .pill{font-size:11px;padding:5px 12px}
+      .lic{font-size:10px}
+      .mode-tag{font-size:10px}
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <div class="hdr">
+    <div style="display:flex;align-items:baseline;gap:8px">
+      <div class="logo">Ham<em>Ops</em></div>
+      <div style="font-size:10px;color:var(--txd);font-family:var(--mono);letter-spacing:.5px">from KJ5MJD</div>
+    </div>
+    <div class="sbars"><span></span><span></span><span></span><span></span></div>
+    <div class="utc">UTC&nbsp;<b id="clk">--:--:--</b></div>
+  </div>
+  <div class="tabs">
+    <button class="tab on"  onclick="sw('cond',this)">CONDITIONS</button>
+    <button class="tab"     onclick="sw('bp',this)">BAND PLAN</button>
+    <button class="tab"     onclick="sw('dx',this)">DX SPOTS</button>
+    <button class="tab"     onclick="sw('grid',this)">GRID LOC</button>
+    <button class="tab"     onclick="sw('freq',this)">FREQ CALC</button>
+    <button class="tab"     onclick="sw('cs',this)">CALLSIGN</button>
+  </div>
+  <div class="body">
+
+    <!-- CONDITIONS -->
+    <div class="pnl on" id="pnl-cond">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div class="sec" style="margin:0;border:none;padding:0">REAL-TIME SOLAR &amp; BAND CONDITIONS</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span id="ts" style="font-size:clamp(11px,2vw,13px);color:var(--txd)">Loading…</span>
+          <button class="btn" id="rbtn" onclick="loadAll()">↻ REFRESH</button>
+        </div>
+      </div>
+      <div id="err-box" style="display:none"></div>
+      <div class="solar-grid">
+        <div class="scard"><div class="scard-val" id="v-sfi">--</div><div class="scard-lbl">Solar Flux</div><div class="scard-st" id="s-sfi">…</div></div>
+        <div class="scard"><div class="scard-val" id="v-ki">--</div><div class="scard-lbl">K-Index</div><div class="scard-st" id="s-ki">…</div></div>
+        <div class="scard"><div class="scard-val" id="v-ai">--</div><div class="scard-lbl">A-Index</div><div class="scard-st" id="s-ai">…</div></div>
+        <div class="scard"><div class="scard-val" id="v-sn">--</div><div class="scard-lbl">Sunspots</div><div class="scard-st" id="s-sn">…</div></div>
+      </div>
+      <div class="sec">MUF · OWF · foF2 — IONOSPHERIC FREQUENCIES</div>
+      <div class="muf-main">
+        <div class="muf-card"><div class="muf-val" id="muf-val" style="color:var(--am)">--</div><div class="muf-unit">MHz</div><div class="muf-lbl">MUF (3000 km)</div><div class="muf-sub" id="muf-sub">Global median</div></div>
+        <div class="muf-card"><div class="muf-val" id="owf-val" style="color:var(--g)">--</div><div class="muf-unit">MHz</div><div class="muf-lbl">OWF (85% MUF)</div><div class="muf-sub">Optimal working freq</div></div>
+        <div class="muf-card"><div class="muf-val" id="fof2-val" style="color:#4488ff">--</div><div class="muf-unit">MHz</div><div class="muf-lbl">foF2 — Critical Freq</div><div class="muf-sub" id="fof2-sub">NVIS ceiling</div></div>
+      </div>
+      <div style="font-size:clamp(11px,2vw,12px);color:var(--txd);letter-spacing:1px;margin-bottom:6px">BAND STATUS BY MUF</div>
+      <div class="band-muf-grid" id="band-muf-grid">
+        <div class="bmuf-cell" style="grid-column:span 9"><span style="font-size:11px;color:var(--txd)">Fetching ionosonde data…</span></div>
+      </div>
+      <div style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;font-size:clamp(10px,2vw,12px);color:var(--txd);margin-bottom:2px"><span>1.8 MHz (160m)</span><span>29.7 MHz (10m)</span></div>
+        <div style="position:relative">
+          <div class="muf-scale-bar"></div>
+          <div class="muf-marker" id="muf-marker">
+            <div class="muf-needle" id="muf-needle" style="left:50%"></div>
+            <div class="muf-needle-lbl" id="muf-needle-lbl" style="left:50%">MUF</div>
+            <div class="muf-needle" id="owf-needle" style="left:42%;background:var(--g)"></div>
+            <div class="muf-needle-lbl" id="owf-needle-lbl" style="left:42%;color:var(--g)">OWF</div>
+          </div>
+        </div>
+        <div style="font-size:clamp(11px,2vw,12px);color:var(--txd);margin-top:26px">white = MUF &nbsp;·&nbsp; green = OWF</div>
+      </div>
+      <div class="sec">HF BAND PROPAGATION</div>
+      <div id="band-bars"><div style="font-size:12px;color:var(--txd)">Fetching…</div></div>
+      <div class="sec" style="margin-top:16px">NOISE FLOOR — 10m / 20m / 40m</div>
+      <div class="noise-grid">
+        <div class="ncard"><div class="ncard-band">10m</div><div class="ncard-s" id="n10s">--</div><div class="ncard-db" id="n10d">--</div><div class="ncard-lv" id="n10l">…</div></div>
+        <div class="ncard"><div class="ncard-band">20m</div><div class="ncard-s" id="n20s">--</div><div class="ncard-db" id="n20d">--</div><div class="ncard-lv" id="n20l">…</div></div>
+        <div class="ncard"><div class="ncard-band">40m</div><div class="ncard-s" id="n40s">--</div><div class="ncard-db" id="n40d">--</div><div class="ncard-lv" id="n40l">…</div></div>
+      </div>
+      <div class="rbox" id="summary" style="margin-top:12px;font-size:11px;color:var(--txd);line-height:1.8">Fetching solar data…</div>
+    </div>
+
+    <!-- DX SPOTS -->
+    <div class="pnl" id="pnl-dx">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="sec" style="margin:0;border:none;padding:0">LIVE DX CLUSTER SPOTS</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span id="dx-ts" style="font-size:clamp(11px,2vw,13px);color:var(--txd)">Loading…</span>
+          <button class="btn" id="dx-rbtn" onclick="loadDX()">↻ REFRESH</button>
+        </div>
+      </div>
+      <div id="dx-err" style="display:none"></div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:clamp(11px,2vw,12px);color:var(--txd);letter-spacing:1px;margin-bottom:6px">FILTER BY MODE</div>
+        <div class="pill-row" id="mode-pills">
+          <button class="pill on" onclick="toggleMode('ALL',this)">ALL</button>
+          <button class="pill" onclick="toggleMode('CW',this)">CW</button>
+          <button class="pill" onclick="toggleMode('SSB',this)">SSB</button>
+          <button class="pill" onclick="toggleMode('FT8',this)">FT8</button>
+          <button class="pill" onclick="toggleMode('FT4',this)">FT4</button>
+          <button class="pill" onclick="toggleMode('RTTY',this)">RTTY</button>
+          <button class="pill" onclick="toggleMode('PSK',this)">PSK</button>
+          <button class="pill" onclick="toggleMode('OTHER',this)">OTHER</button>
+        </div>
+      </div>
+      <div id="dx-count" style="font-size:clamp(11px,2vw,13px);color:var(--txd);margin-bottom:10px"></div>
+      <div id="dx-content"><div class="dx-loading">Fetching DX spots…</div></div>
+    </div>
+
+    <!-- CALLSIGN -->
+    <div class="pnl" id="pnl-cs">
+      <div class="sec">CALLSIGN LOOKUP</div>
+      <div class="cs-search-row">
+        <input type="text" id="cs-input" placeholder="ENTER CALLSIGN" maxlength="12"
+          onkeydown="if(event.key==='Enter')lookupCall()"
+          oninput="this.value=this.value.toUpperCase()">
+        <button class="btn" id="cs-btn" onclick="lookupCall()">LOOKUP</button>
+      </div>
+      <div id="cs-result">
+        <div class="cs-empty">Enter any US amateur callsign above.<br><span style="color:var(--txd)">Data via callook.info (FCC) · Updated daily</span></div>
+      </div>
+    </div>
+
+    <!-- FREQ CALC -->
+    <div class="pnl" id="pnl-freq">
+      <div class="sec">FREQUENCY &amp; ANTENNA CALCULATOR</div>
+      <div class="g2">
+        <div class="row"><label>Frequency (MHz)</label><input type="number" id="f-mhz" placeholder="e.g. 14.225" step="0.001" oninput="calcF('mhz')"></div>
+        <div class="row"><label>Wavelength (meters)</label><input type="number" id="f-wl" placeholder="e.g. 20" step="0.001" oninput="calcF('wl')"></div>
+      </div>
+      <div class="g2">
+        <div><label>Half-wave dipole</label><div class="rbox"><div class="rv" id="f-dm">—</div><div class="rl">meters</div><div class="rv" id="f-dft" style="font-size:15px;margin-top:6px">—</div><div class="rl">feet (468/f)</div></div></div>
+        <div><label>Quarter-wave vertical</label><div class="rbox"><div class="rv" id="f-qm">—</div><div class="rl">meters</div><div class="rv" id="f-qft" style="font-size:15px;margin-top:6px">—</div><div class="rl">feet (234/f)</div></div></div>
+      </div>
+      <div class="rbox" id="f-band" style="margin-top:10px;font-size:13px;color:var(--g)">Enter frequency above</div>
+      <div style="margin-top:18px"><div class="sec">SWR CALCULATOR</div>
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+          <div style="flex:1;min-width:100px"><label>Forward (W)</label><input type="number" id="s-fwd" placeholder="100" oninput="calcSWR()"></div>
+          <div style="flex:1;min-width:100px"><label>Reflected (W)</label><input type="number" id="s-ref" placeholder="4" oninput="calcSWR()"></div>
+          <div class="rbox" style="flex:1;margin:0;padding:8px 12px;display:flex;align-items:center;gap:6px">
+            <span class="rv" id="swr-v">—</span><span style="font-size:11px;color:var(--txd)">:1 SWR</span>
+          </div>
+        </div>
+        <div id="swr-t" style="font-size:11px;color:var(--txd);margin-top:6px"></div>
+      </div>
+    </div>
+
+    <!-- GRID -->
+    <div class="pnl" id="pnl-grid">
+      <div class="sec">MAIDENHEAD GRID LOCATOR</div>
+      <div class="g2">
+        <div>
+          <div class="row"><label>Latitude (decimal °)</label><input type="number" id="g-lat" placeholder="e.g. 33.1581" step="0.0001" oninput="calcGrid()"></div>
+          <div class="row"><label>Longitude (decimal °)</label><input type="number" id="g-lng" placeholder="e.g. -96.8230" step="0.0001" oninput="calcGrid()"></div>
+          <button class="btn" onclick="myLoc()">⊕ USE MY LOCATION</button>
+        </div>
+        <div><label>Your grid square</label>
+          <div class="rbox" style="min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center">
+            <div class="grid-big" id="g-res">—</div>
+            <div class="grid-sub" id="g-sub">Enter coordinates or use location</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:18px"><div class="sec">GRID-TO-GRID DISTANCE</div>
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+          <div style="flex:1;min-width:90px"><label>Grid A</label><input type="text" id="ga" placeholder="e.g. EM13" maxlength="6" oninput="calcDist()"></div>
+          <div style="flex:1;min-width:90px"><label>Grid B</label><input type="text" id="gb" placeholder="e.g. DM79" maxlength="6" oninput="calcDist()"></div>
+          <div class="rbox" style="flex:2;margin:0;padding:8px 12px;display:flex;align-items:center;gap:8px">
+            <span class="rv" id="d-km">—</span><span style="font-size:11px;color:var(--txd)" id="d-mi"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BAND PLAN -->
+    <div class="pnl" id="pnl-bp">
+      <div class="bp-toolbar">
+        <div class="pill-row" id="region-pills">
+          <button class="pill on" onclick="setRegion('USA',this)">USA (FCC)</button>
+          <button class="pill" onclick="setRegion('CA',this)">Canada (ISED)</button>
+        </div>
+        <div style="margin-left:auto">
+          <select id="band-jump" onchange="jumpBand(this.value)">
+            <option value="">Jump to band…</option>
+            <option value="160m">160m</option><option value="80m">80m</option>
+            <option value="60m">60m</option><option value="40m">40m</option>
+            <option value="30m">30m</option><option value="20m">20m</option>
+            <option value="17m">17m</option><option value="15m">15m</option>
+            <option value="12m">12m</option><option value="10m">10m</option>
+            <option value="6m">6m</option><option value="2m">2m</option>
+            <option value="70cm">70cm</option><option value="33cm">33cm</option>
+            <option value="23cm">23cm</option><option value="13cm">13cm</option>
+          </select>
+        </div>
+      </div>
+      <div class="legend">
+        <div class="leg-item"><div class="leg-dot" style="background:#00e87a;border:1px solid #005a40"></div><span>Extra / Advanced</span></div>
+        <div class="leg-item"><div class="leg-dot" style="background:#ffaa00;border:1px solid #5a3000"></div><span>General</span></div>
+        <div class="leg-item"><div class="leg-dot" style="background:#4488ff;border:1px solid #003080"></div><span>Technician</span></div>
+        <div class="leg-item"><div class="leg-dot" style="background:#cc88ff;border:1px solid #400040"></div><span>Novice</span></div>
+        <div class="leg-item"><div class="leg-dot" style="background:#dddd44;border:1px solid #444400"></div><span>Canada Basic+</span></div>
+        <div style="margin-left:auto;font-size:clamp(11px,2vw,12px);color:var(--txd)" id="region-note">FCC Part 97 · USA</div>
+      </div>
+      <div id="bp-content"></div>
+    </div>
+
+    <!-- QUICK REFERENCE -->
+    <div class="pnl" id="pnl-qr">
+      <div class="sec">QUICK REFERENCE — COMMON OPERATING FREQUENCIES</div>
+      <div id="qr-content"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+setInterval(()=>{
+  const n=new Date(),z=v=>String(v).padStart(2,'0');
+  document.getElementById('clk').textContent=z(n.getUTCHours())+':'+z(n.getUTCMinutes())+':'+z(n.getUTCSeconds());
+},1000);
+function sw(id,btn){
+  document.querySelectorAll('.pnl').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('pnl-'+id).classList.add('on');
+  btn.classList.add('on');
+}
+const PROXIES=[
+  url=>'https://corsproxy.io/?url='+encodeURIComponent(url),
+  url=>'https://api.allorigins.win/raw?url='+encodeURIComponent(url),
+];
+async function corsGet(url){
+  for(const p of PROXIES){
+    try{const r=await fetch(p(url),{signal:AbortSignal.timeout(9000)});if(r.ok)return await r.text();}catch(e){}
+  }
+  return null;
+}
+async function loadAll(){
+  const btn=document.getElementById('rbtn');
+  btn.disabled=true;btn.textContent='↻ …';
+  document.getElementById('ts').textContent='Fetching…';
+  document.getElementById('err-box').style.display='none';
+  await Promise.all([loadSolar(),loadMUF()]);
+  btn.disabled=false;btn.textContent='↻ REFRESH';
+  document.getElementById('ts').textContent='Updated '+new Date().toLocaleTimeString();
+}
+async function loadSolar(){
+  const xml=await corsGet('https://www.hamqsl.com/solarxml.php');
+  if(xml){
+    try{
+      const doc=new DOMParser().parseFromString(xml,'text/xml');
+      const g=t=>doc.getElementsByTagName(t)[0]?.textContent||'';
+      renderSolar({sfi:parseFloat(g('solarflux'))||0,ki:parseFloat(g('kindex'))||0,
+        ai:parseFloat(g('aindex'))||0,sn:parseFloat(g('sunspots'))||0,
+        xray:g('xray'),updated:g('updated'),src:'HamQSL'});
+    }catch(e){solarFallback('XML parse error');}
+  }else{solarFallback('Could not reach HamQSL — estimated values shown.');}
+}
+function solarFallback(msg){
+  const el=document.getElementById('err-box');
+  el.style.display='block';el.className='note';el.textContent='⚠ '+msg;
+  renderSolar({sfi:158,ki:2,ai:8,sn:135,xray:'A5',updated:'estimated',src:'estimated'});
+}
+let lastSFI=158,lastKI=2;
+async function loadMUF(){
+  const txt=await corsGet('https://prop.kc2g.com/api/stations.json');
+  if(txt){
+    try{
+      const data=JSON.parse(txt);
+      const stations=Array.isArray(data)?data:(data.stations||[]);
+      const mufds=[],fof2s=[];
+      stations.forEach(st=>{
+        const m=st.metrics||st;
+        const mufd=parseFloat(m.mufd||m.MUFd||m.muf||0);
+        const fof2=parseFloat(m.fof2||m.foF2||m.FoF2||0);
+        if(mufd>1&&mufd<50)mufds.push(mufd);
+        if(fof2>0.5&&fof2<20)fof2s.push(fof2);
+      });
+      if(mufds.length>0){
+        mufds.sort((a,b)=>a-b);fof2s.sort((a,b)=>a-b);
+        const median=arr=>arr[Math.floor(arr.length/2)];
+        renderMUF(median(mufds),fof2s.length>0?median(fof2s):median(mufds)/3,stations.length);
+        return;
+      }
+    }catch(e){}
+  }
+  mufFallback();
+}
+function mufFallback(){
+  const sfi=lastSFI,isDay=new Date().getUTCHours()>=10&&new Date().getUTCHours()<=22;
+  const fof2=isDay?Math.max(2,2.5+(sfi-60)*0.04):Math.max(1.5,1.5+(sfi-60)*0.025);
+  renderMUF(fof2*3.5,fof2,0);
+}
+function renderMUF(muf,fof2,stationCount){
+  const owf=muf*0.85;
+  document.getElementById('muf-val').textContent=muf.toFixed(1);
+  document.getElementById('owf-val').textContent=owf.toFixed(1);
+  document.getElementById('fof2-val').textContent=fof2.toFixed(1);
+  const src=stationCount>0?stationCount+' ionosondes via GIRO/KC2G':'Estimated from SFI';
+  document.getElementById('muf-sub').textContent=src;
+  document.getElementById('fof2-sub').textContent='NVIS ceiling · '+src;
+  const BANDS_MUF=[
+    {nm:'160m',freq:1.85},{nm:'80m',freq:3.75},{nm:'40m',freq:7.15},
+    {nm:'30m',freq:10.125},{nm:'20m',freq:14.175},{nm:'17m',freq:18.1},
+    {nm:'15m',freq:21.225},{nm:'12m',freq:24.94},{nm:'10m',freq:28.85},
+  ];
+  let html='';
+  BANDS_MUF.forEach(b=>{
+    let dot,label,lc;
+    if(b.freq<=owf){dot='var(--g)';label='OPEN';lc='var(--g)';}
+    else if(b.freq<=muf){dot='var(--am)';label='MARG';lc='var(--am)';}
+    else{dot='var(--re)';label='CLSD';lc='var(--re)';}
+    html+=`<div class="bmuf-cell"><div class="bmuf-name">${b.nm}</div><div class="bmuf-dot" style="background:${dot}"></div><div class="bmuf-status" style="color:${lc}">${label}</div></div>`;
+  });
+  document.getElementById('band-muf-grid').innerHTML=html;
+  const toPos=f=>Math.min(100,Math.max(0,((f-1.8)/(30-1.8))*100));
+  const mufPct=toPos(muf),owfPct=toPos(owf);
+  document.getElementById('muf-needle').style.left=mufPct+'%';
+  document.getElementById('muf-needle-lbl').style.left=mufPct+'%';
+  document.getElementById('muf-needle-lbl').textContent=muf.toFixed(1)+' MHz';
+  document.getElementById('owf-needle').style.left=owfPct+'%';
+  document.getElementById('owf-needle-lbl').style.left=owfPct+'%';
+  document.getElementById('owf-needle-lbl').textContent=owf.toFixed(1);
+}
+const HFBANDS=[
+  {nm:'160m',sfiW:.02,bD:.5,bN:.72,gW:.5},{nm:'80m',sfiW:.07,bD:.45,bN:.65,gW:.45},
+  {nm:'40m',sfiW:.13,bD:.55,bN:.6,gW:.4},{nm:'30m',sfiW:.2,bD:.5,bN:.42,gW:.38},
+  {nm:'20m',sfiW:.3,bD:.62,bN:.38,gW:.33},{nm:'17m',sfiW:.4,bD:.52,bN:.28,gW:.28},
+  {nm:'15m',sfiW:.5,bD:.45,bN:.18,gW:.25},{nm:'12m',sfiW:.62,bD:.3,bN:.08,gW:.22},
+  {nm:'10m',sfiW:.75,bD:.2,bN:.04,gW:.2},
+];
+function isDay(){const h=new Date().getUTCHours();return h>=10&&h<=22;}
+function renderSolar(sol){
+  const{sfi,ki,ai,sn}=sol;
+  lastSFI=sfi||lastSFI;lastKI=ki||lastKI;
+  sc('sfi',Math.round(sfi),sfi>=150?['EXCELLENT','good']:sfi>=120?['GOOD','good']:sfi>=90?['FAIR','warn']:['POOR','bad']);
+  sc('ki',ki.toFixed(1),ki<=2?['QUIET','good']:ki<=3?['UNSETTLED','warn']:ki<=5?['ACTIVE','bad']:['STORM','bad']);
+  sc('ai',Math.round(ai),ai<=7?['CALM','good']:ai<=15?['UNSETTLED','warn']:['DISTURBED','bad']);
+  sc('sn',Math.round(sn),sn>=100?['HIGH','good']:sn>=50?['MODERATE','warn']:['LOW','bad']);
+  const day=isDay(),sfiS=Math.min(1,(sfi-60)/220),geoP=Math.min(1,ki/9)*.68;
+  let h='';
+  HFBANDS.forEach(b=>{
+    const base=day?b.bD:b.bN;
+    let s=Math.min(1,base+sfiS*b.sfiW)*(1-geoP*b.gW);
+    s=Math.max(0,Math.min(1,s));
+    const p=Math.round(s*100),col=p>65?'var(--g)':p>38?'var(--am)':'var(--re)';
+    const cond=p>65?'<span class="good">OPEN</span>':p>38?'<span class="warn">FAIR</span>':'<span class="bad">CLOSED</span>';
+    h+=`<div class="band-row"><span class="band-nm">${b.nm}</span><div class="bar-bg"><div class="bar-fill" style="width:${p}%;background:${col}"></div></div><span class="band-pct">${p}%</span><span class="band-cd">${cond}</span></div>`;
+  });
+  document.getElementById('band-bars').innerHTML=h;
+  const bds=[{id:'10',base:-132,sfiK:.07,kiK:2},{id:'20',base:-126,sfiK:.04,kiK:3.5},{id:'40',base:-119,sfiK:.015,kiK:6}];
+  bds.forEach(b=>{
+    const db=Math.round(b.base+(sfi-100)*b.sfiK+ki*b.kiK);
+    const sv=db>=-73?9:Math.max(1,Math.round(9+(db+73)/6));
+    const ss=sv>=9?'S9+'+(Math.max(0,Math.round((db+73)/10))*10)+'dB':'S'+sv;
+    const lv=db<-120?['LOW','good']:db<-112?['MODERATE','warn']:['HIGH','bad'];
+    document.getElementById('n'+b.id+'s').textContent=ss;
+    document.getElementById('n'+b.id+'s').className='ncard-s '+lv[1];
+    document.getElementById('n'+b.id+'d').textContent=db+' dBm';
+    document.getElementById('n'+b.id+'l').textContent=lv[0]+' NOISE';
+    document.getElementById('n'+b.id+'l').className='ncard-lv '+lv[1];
+  });
+  const tips=[];
+  if(sfi>=150)tips.push('High SFI — excellent DX on 10m–20m.');
+  else if(sfi>=100)tips.push('Moderate SFI — 20m and 40m most productive.');
+  else tips.push('Low SFI — 40m/80m most reliable.');
+  if(ki<=2)tips.push('Geomagnetic field quiet — polar paths clear.');
+  else if(ki<=4)tips.push('Unsettled — some high-latitude path degradation.');
+  else tips.push('Active/storm — high-latitude paths severely degraded.');
+  tips.push(day?'Daytime: D-layer active. Higher bands favored.':'Nighttime: D-layer absent — 40m/80m/160m improved.');
+  const srcNote=sol.src==='estimated'?'<span style="color:var(--am)">⚠ Estimated values.</span>':'Source: '+sol.src+(sol.updated?' · '+sol.updated:'');
+  document.getElementById('summary').innerHTML=tips.map(t=>'· '+t).join('<br>')+'<br><span style="color:var(--txd)">'+srcNote+'</span>';
+}
+function sc(id,val,st){
+  document.getElementById('v-'+id).textContent=val;
+  const el=document.getElementById('s-'+id);el.textContent=st[0];el.className='scard-st '+st[1];
+}
+let allSpots=[],modeFilter='ALL';
+const BAND_ORDER=['160m','80m','60m','40m','30m','20m','17m','15m','12m','10m','6m','2m','70cm','other'];
+const BAND_COLORS={'160m':'#1a0a2e','80m':'#1a1500','40m':'#001a0a','30m':'#0a1a00','20m':'#001a1a','17m':'#000f2e','15m':'#1a000f','12m':'#1a0a00','10m':'#0a1a0a','6m':'#001a2e','2m':'#1a1a00','70cm':'#1a001a','other':'#1a1a1a'};
+const BAND_TEXT={'160m':'#cc88ff','80m':'#ffcc44','40m':'#44ffaa','30m':'#aaff44','20m':'#44ffee','17m':'#4499ff','15m':'#ff6699','12m':'#ff9944','10m':'#66ff88','6m':'#44ccff','2m':'#ffff44','70cm':'#ff44ff','other':'#888'};
+function freqToBand(f){
+  if(f>=1800&&f<=2000)return'160m';if(f>=3500&&f<=4000)return'80m';
+  if(f>=5330&&f<=5410)return'60m';if(f>=7000&&f<=7300)return'40m';
+  if(f>=10100&&f<=10150)return'30m';if(f>=14000&&f<=14350)return'20m';
+  if(f>=18068&&f<=18168)return'17m';if(f>=21000&&f<=21450)return'15m';
+  if(f>=24890&&f<=24990)return'12m';if(f>=28000&&f<=29700)return'10m';
+  if(f>=50000&&f<=54000)return'6m';if(f>=144000&&f<=148000)return'2m';
+  if(f>=420000&&f<=450000)return'70cm';return'other';
+}
+function detectMode(c,f){
+  const u=(c||'').toUpperCase();
+  if(/\bFT8\b/.test(u))return'FT8';if(/\bFT4\b/.test(u))return'FT4';
+  if(/\bCW\b/.test(u))return'CW';if(/\bSSB\b|USB|LSB/.test(u))return'SSB';
+  if(/\bRTTY\b/.test(u))return'RTTY';if(/PSK/.test(u))return'PSK';
+  if(/\bAM\b/.test(u))return'AM';if(/\bFM\b/.test(u))return'FM';
+  if(f>=14074&&f<=14076||f>=7074&&f<=7076||f>=21074&&f<=21076||f>=28074&&f<=28076)return'FT8';
+  if(f>=14080&&f<=14082)return'FT4';return'';
+}
+function modeClass(m){
+  const u=(m||'').toUpperCase();
+  if(u==='CW')return'mode-cw';if(u==='SSB'||u==='USB'||u==='LSB')return'mode-ssb';
+  if(u==='FT8')return'mode-ft8';if(u==='FT4')return'mode-ft4';
+  if(u==='RTTY')return'mode-rtty';if(u.startsWith('PSK'))return'mode-psk';
+  if(u==='AM')return'mode-am';if(u==='FM')return'mode-fm';return'mode-other';
+}
+function spotAge(dtStr){
+  if(!dtStr)return'';
+  try{
+    const p=dtStr.trim().split(/[\s\/\-:]+/);
+    if(p.length<5)return'';
+    const d=new Date(Date.UTC(parseInt(p[2])||2024,parseInt(p[1])-1,parseInt(p[0]),parseInt(p[3]),parseInt(p[4]),0));
+    const diff=Math.round((Date.now()-d.getTime())/60000);
+    if(diff<0||diff>1440)return'';
+    return diff<60?diff+'m ago':Math.floor(diff/60)+'h '+(diff%60)+'m ago';
+  }catch(e){return'';}
+}
+async function loadDX(){
+  const btn=document.getElementById('dx-rbtn');
+  btn.disabled=true;btn.textContent='↻ …';
+  document.getElementById('dx-ts').textContent='Fetching…';
+  document.getElementById('dx-err').style.display='none';
+  document.getElementById('dx-content').innerHTML='<div class="dx-loading">Fetching live DX spots…</div>';
+  const csv=await corsGet('https://www.hamqth.com/dxc_csv.php?limit=100');
+  if(csv&&csv.trim().length>10){
+    try{
+      const lines=csv.trim().split('\n').filter(l=>l.trim());
+      allSpots=lines.map(line=>{
+        const p=line.split('^');
+        const freq=p[1]||'',fv=parseFloat(freq)||0,comment=p[4]||'';
+        return{call:p[0]||'',freq:fv,dt:p[2]||'',spotter:p[3]||'',comment,
+          lotw:p[5]==='1',band:p[8]||freqToBand(fv),country:p[9]||'',mode:detectMode(comment,fv)};
+      }).filter(s=>s.call&&s.freq>0);
+      renderDX();
+      document.getElementById('dx-ts').textContent='Updated '+new Date().toLocaleTimeString()+' · HamQTH ('+allSpots.length+')';
+    }catch(e){dxFallback('Parse error');}
+  }else{dxFallback('Could not reach DX cluster.');}
+  btn.disabled=false;btn.textContent='↻ REFRESH';
+}
+function dxFallback(msg){
+  const el=document.getElementById('dx-err');
+  el.style.display='block';el.className='note';el.textContent='⚠ '+msg;
+  document.getElementById('dx-content').innerHTML='<div class="dx-empty">No spots available.</div>';
+  document.getElementById('dx-ts').textContent='Unavailable';
+}
+function toggleMode(mode,btn){
+  modeFilter=mode;
+  document.querySelectorAll('#mode-pills .pill').forEach(p=>p.classList.remove('on'));
+  btn.classList.add('on');renderDX();
+}
+function renderDX(){
+  let spots=allSpots;
+  if(modeFilter!=='ALL'){
+    const known=['CW','SSB','FT8','FT4','RTTY','PSK','AM','FM'];
+    spots=modeFilter==='OTHER'?spots.filter(s=>!known.includes(s.mode)):spots.filter(s=>s.mode===modeFilter);
+  }
+  document.getElementById('dx-count').textContent=spots.length+' spots'+(modeFilter!=='ALL'?' ('+modeFilter+')':'');
+  const byBand={};
+  spots.forEach(s=>{const b=s.band||'other';if(!byBand[b])byBand[b]=[];byBand[b].push(s);});
+  const present=BAND_ORDER.filter(b=>byBand[b]&&byBand[b].length>0);
+  if(!present.length){document.getElementById('dx-content').innerHTML='<div class="dx-empty">No spots match filter.</div>';return;}
+  let html='';
+  present.forEach(band=>{
+    const bspots=byBand[band],bg=BAND_COLORS[band]||'#1a1a1a',tc=BAND_TEXT[band]||'#aaa';
+    html+=`<div class="dx-band-section"><div class="dx-band-header" style="background:${bg};color:${tc};border:1px solid ${tc}33"><span style="font-size:14px;font-weight:700">${band}</span><span style="font-size:10px;opacity:.7">${bspots.length} spot${bspots.length!==1?'s':''}</span></div>
+    <table class="dx-table"><thead><tr><th>DX Call</th><th>Freq (kHz)</th><th>Mode</th><th>Spotter</th><th>Comment</th><th style="text-align:right">Age</th></tr></thead><tbody>`;
+    bspots.forEach(s=>{
+      const mc=modeClass(s.mode),age=spotAge(s.dt),lotw=s.lotw?'<span style="font-size:11px;color:var(--g);margin-left:4px">L</span>':'';
+      html+=`<tr><td><span class="dx-call" style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted" onclick="lookupFromDX('${s.call}')">${s.call}</span>${lotw}${s.country?`<br><span style="font-size:11px;color:var(--txd)">${s.country}</span>`:''}</td>
+      <td><span class="dx-freq">${s.freq.toFixed(1)}</span></td>
+      <td><span class="dx-mode ${mc}">${s.mode||'—'}</span></td>
+      <td class="dx-spotter">${s.spotter}</td>
+      <td class="dx-comment" title="${s.comment}">${s.comment||'—'}</td>
+      <td class="dx-age">${age}</td></tr>`;
+    });
+    html+=`</tbody></table></div>`;
+  });
+  document.getElementById('dx-content').innerHTML=html;
+}
+function lookupFromDX(call){
+  document.querySelectorAll('.pnl').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('pnl-cs').classList.add('on');
+  document.querySelectorAll('.tab')[5].classList.add('on');
+  document.getElementById('cs-input').value=call;
+  lookupCall();
+}
+function isUSCall(call){return /^[KNW][0-9A-Z]/.test(call)||/^A[A-L][0-9]/.test(call);}
+async function lookupCall(){
+  const call=document.getElementById('cs-input').value.trim().toUpperCase().replace(/[^A-Z0-9\/]/g,'');
+  if(!call)return;
+  const btn=document.getElementById('cs-btn');
+  btn.disabled=true;btn.textContent='…';
+  document.getElementById('cs-result').innerHTML='<div class="cs-loading">Looking up '+call+'…</div>';
+  if(!isUSCall(call)){
+    document.getElementById('cs-result').innerHTML=`<div class="cs-intl-note"><div style="font-family:var(--disp);font-size:16px;color:var(--g);letter-spacing:2px;margin-bottom:8px">${call}</div><div style="color:var(--tx);margin-bottom:10px">Non-US callsigns are not in the FCC database. Look up on:</div><div style="display:flex;gap:8px;flex-wrap:wrap"><a class="cs-link" href="https://www.qrz.com/db/${call}" target="_blank">QRZ.com ↗</a><a class="cs-link" href="https://www.hamqth.com/${call}" target="_blank">HamQTH ↗</a><a class="cs-link" href="https://www.qrzcq.com/call/${call}" target="_blank">QRZCQ ↗</a><a class="cs-link" href="https://clublog.org/logsearch/pxf.php?call=${call}" target="_blank">Club Log ↗</a></div></div>`;
+    btn.disabled=false;btn.textContent='LOOKUP';return;
+  }
+  let data=null;
+  try{const r=await fetch(`https://callook.info/${call}/json`,{signal:AbortSignal.timeout(8000)});if(r.ok)data=await r.json();}catch(e){}
+  if(!data){try{const txt=await corsGet(`https://callook.info/${call}/json`);if(txt)data=JSON.parse(txt);}catch(e){}}
+  if(!data||data.status==='INVALID'){
+    document.getElementById('cs-result').innerHTML=`<div class="cs-error">Callsign <strong>${call}</strong> not found in FCC database.</div>`;
+    btn.disabled=false;btn.textContent='LOOKUP';return;
+  }
+  renderCallsign(data,call);
+  btn.disabled=false;btn.textContent='LOOKUP';
+}
+function renderCallsign(d,originalCall){
+  const call=(d.current&&d.current.callsign)||originalCall;
+  const name=d.name||'Unknown';
+  const opClass=((d.current&&d.current.operClass)||'').toUpperCase();
+  const status=(d.status||'').toUpperCase();
+  const addr1=(d.address&&d.address.line1)||'';
+  const addr2=(d.address&&d.address.line2)||'';
+  const lat=(d.location&&d.location.latitude)||'';
+  const lng=(d.location&&d.location.longitude)||'';
+  const grid=(d.location&&d.location.gridsquare)||'';
+  const expires=(d.otherInfo&&d.otherInfo.expiryDate)||'';
+  const granted=(d.otherInfo&&d.otherInfo.grantDate)||'';
+  const lastAction=(d.otherInfo&&d.otherInfo.lastActionDate)||'';
+  const ulsUrl=(d.otherInfo&&d.otherInfo.ulsUrl)||'';
+  const prevCall=(d.previous&&d.previous.callsign)||'';
+  const prevClass=(d.previous&&d.previous.operClass)||'';
+  const trustee=(d.trustee&&d.trustee.callsign)||'';
+  const type=(d.type||'').toUpperCase();
+  const nameParts=name.split(' ').filter(Boolean);
+  const initials=nameParts.length>=2?nameParts[0][0]+nameParts[nameParts.length-1][0]:name.slice(0,2);
+  const classLabel={'EXTRA':'Amateur Extra','GENERAL':'General','TECHNICIAN':'Technician','NOVICE':'Novice'}[opClass]||opClass||'Unknown';
+  const classCss={'EXTRA':'class-extra','GENERAL':'class-general','TECHNICIAN':'class-technician','NOVICE':'class-novice'}[opClass]||'class-other';
+  const statusHtml=status==='VALID'?`<span class="cs-status-valid">● ACTIVE</span>`:`<span class="cs-status-expired">● ${status||'UNKNOWN'}</span>`;
+  const fields=[
+    ['License Class',`<span class="cs-class-badge ${classCss}">${classLabel}</span>`],
+    ['Status',statusHtml],['Address',addr1+(addr2?'<br>'+addr2:'')],['Expires',expires||'—'],
+    ['Grid Square',grid?`<span class="mono">${grid.toUpperCase()}</span>`:'—'],['Granted',granted||'—'],
+    ['Coordinates',lat&&lng?lat+', '+lng:'—'],['Last Action',lastAction||'—'],
+  ];
+  if(prevCall)fields.push(['Previous Call',`<span class="mono">${prevCall}</span> (${prevClass})`]);
+  if(trustee)fields.push(['Trustee',`<span class="mono">${trustee}</span>`]);
+  if(type==='CLUB')fields.push(['Type','Club / Organization']);
+  let fieldsHtml='';
+  fields.forEach(([k,v])=>{fieldsHtml+=`<div class="cs-field"><div class="cs-field-label">${k}</div><div class="cs-field-val">${v}</div></div>`;});
+  let links=`<a class="cs-link" href="https://www.qrz.com/db/${call}" target="_blank">QRZ.com ↗</a><a class="cs-link" href="https://www.hamqth.com/${call}" target="_blank">HamQTH ↗</a>`;
+  if(ulsUrl)links+=`<a class="cs-link" href="${ulsUrl}" target="_blank">FCC ULS ↗</a>`;
+  if(grid)links+=`<span class="cs-link" style="cursor:pointer" onclick="prefillGrid('${grid}')">Plot on Grid Map ↗</span>`;
+  document.getElementById('cs-result').innerHTML=`<div class="cs-card"><div class="cs-card-top"><div class="cs-avatar" style="background:var(--gdk);color:var(--g)">${initials}</div><div><div class="cs-callsign">${call}</div><div class="cs-name">${name}</div><div style="margin-top:6px">${statusHtml}</div></div></div><div class="cs-grid">${fieldsHtml}</div><div class="cs-links">${links}</div></div>`;}
+function prefillGrid(grid){
+  const g=grid.toUpperCase();if(g.length<4)return;
+  const lat=(g.charCodeAt(1)-65)*10+parseInt(g[3])-90+.5;
+  const lng=(g.charCodeAt(0)-65)*20+parseInt(g[2])*2-180+1;
+  document.querySelectorAll('.pnl').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('pnl-grid').classList.add('on');
+  document.querySelectorAll('.tab')[3].classList.add('on');
+  document.getElementById('g-lat').value=lat.toFixed(4);
+  document.getElementById('g-lng').value=lng.toFixed(4);
+  calcGrid();
+}
+function calcF(from){
+  const C=299.792458;let mhz,wl;
+  if(from==='mhz'){mhz=parseFloat(document.getElementById('f-mhz').value);if(!mhz){clrF();return;}wl=C/mhz;document.getElementById('f-wl').value=wl.toFixed(4);}
+  else{wl=parseFloat(document.getElementById('f-wl').value);if(!wl){clrF();return;}mhz=C/wl;document.getElementById('f-mhz').value=mhz.toFixed(4);}
+  document.getElementById('f-dm').textContent=(wl*.4761).toFixed(2)+' m';
+  document.getElementById('f-dft').textContent=(468/mhz).toFixed(2)+' ft';
+  document.getElementById('f-qm').textContent=(wl*.238).toFixed(2)+' m';
+  document.getElementById('f-qft').textContent=(234/mhz).toFixed(2)+' ft';
+  document.getElementById('f-band').textContent=identBand(mhz)+' | '+mhz.toFixed(4)+' MHz | λ = '+wl.toFixed(2)+' m';
+}
+function clrF(){['f-dm','f-dft','f-qm','f-qft'].forEach(id=>document.getElementById(id).textContent='—');document.getElementById('f-band').textContent='Enter frequency above';}
+function identBand(f){
+  const r=[[1.8,2,'160m'],[3.5,4,'80m'],[5.33,5.41,'60m'],[7,7.3,'40m'],[10.1,10.15,'30m'],[14,14.35,'20m'],[18.068,18.168,'17m'],[21,21.45,'15m'],[24.89,24.99,'12m'],[28,29.7,'10m'],[50,54,'6m'],[144,148,'2m'],[420,450,'70cm']];
+  for(const[lo,hi,n]of r)if(f>=lo&&f<=hi)return n+' band';
+  return'Out of amateur allocation';
+}
+function calcSWR(){
+  const f=parseFloat(document.getElementById('s-fwd').value);
+  const r=parseFloat(document.getElementById('s-ref').value);
+  const el=document.getElementById('swr-v'),tip=document.getElementById('swr-t');
+  if(!f||isNaN(r)||r<0||r>f){el.textContent='—';tip.textContent='';return;}
+  const g=Math.sqrt(r/f),swr=(1+g)/(1-g);
+  el.textContent=swr.toFixed(2);
+  el.style.color=swr<1.5?'var(--g)':swr<2.5?'var(--am)':'var(--re)';
+  tip.textContent=swr<1.5?'Excellent — very low reflected power.':swr<2.5?'Acceptable — most rigs will not fold back.':'High SWR — tune antenna or inspect feed line.';
+}
+function calcGrid(){
+  const lat=parseFloat(document.getElementById('g-lat').value);
+  const lng=parseFloat(document.getElementById('g-lng').value);
+  if(isNaN(lat)||isNaN(lng)||lat<-90||lat>90||lng<-180||lng>180){document.getElementById('g-res').textContent='—';return;}
+  document.getElementById('g-res').textContent=toGrid(lat,lng);
+  document.getElementById('g-sub').textContent=lat.toFixed(4)+'°, '+lng.toFixed(4)+'°';
+}
+function toGrid(lat,lng){
+  let lo=lng+180,la=lat+90;
+  return String.fromCharCode(65+Math.floor(lo/20))+String.fromCharCode(65+Math.floor(la/10))+Math.floor((lo%20)/2)+Math.floor(la%10)+String.fromCharCode(97+Math.floor((lo%2)*12))+String.fromCharCode(97+Math.floor((la%1)*24));
+}
+function gridCtr(g){
+  g=g.toUpperCase();if(g.length<4)return null;
+  return{lat:(g.charCodeAt(1)-65)*10+parseInt(g[3])-90+.5,lng:(g.charCodeAt(0)-65)*20+parseInt(g[2])*2-180+1};
+}
+function calcDist(){
+  const a=document.getElementById('ga').value.trim(),b=document.getElementById('gb').value.trim();
+  if(a.length<4||b.length<4){document.getElementById('d-km').textContent='—';document.getElementById('d-mi').textContent='';return;}
+  const pa=gridCtr(a),pb=gridCtr(b);if(!pa||!pb)return;
+  const R=6371,dLat=(pb.lat-pa.lat)*Math.PI/180,dLng=(pb.lng-pa.lng)*Math.PI/180;
+  const x=Math.sin(dLat/2)**2+Math.cos(pa.lat*Math.PI/180)*Math.cos(pb.lat*Math.PI/180)*Math.sin(dLng/2)**2;
+  const km=2*R*Math.asin(Math.sqrt(x));
+  document.getElementById('d-km').textContent=Math.round(km)+' km';
+  document.getElementById('d-mi').textContent='/ '+Math.round(km*.621371)+' mi';
+}
+function myLoc(){
+  if(!navigator.geolocation)return;
+  navigator.geolocation.getCurrentPosition(p=>{
+    document.getElementById('g-lat').value=p.coords.latitude.toFixed(5);
+    document.getElementById('g-lng').value=p.coords.longitude.toFixed(5);
+    calcGrid();
+  });
+}
+loadAll();
+loadDX();
+
+// ══ BAND PLAN ══
+let bpRegion='USA';
+function setRegion(r,btn){
+  bpRegion=r;
+  document.querySelectorAll('#region-pills .pill').forEach(p=>p.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('region-note').textContent=r==='USA'?'FCC Part 97 · USA':'ISED RBR-4 · Canada';
+  renderBandPlan();
+}
+function jumpBand(id){
+  if(!id)return;
+  const el=document.getElementById('band-bp-'+id);
+  if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+  document.getElementById('band-jump').value='';
+}
+const L={
+  e:'<span class="lic lic-e">Extra</span>',
+  g:'<span class="lic lic-g">General</span>',
+  t:'<span class="lic lic-t">Tech</span>',
+  n:'<span class="lic lic-n">Novice</span>',
+  ca:'<span class="lic lic-ca">Basic+</span>',
+  adv:'<span class="lic lic-e" style="background:#002a1a;color:#55ffbb">Adv</span>',
+};
+const MM={
+  cw:'<span class="mode-tag mt-cw">CW</span>',
+  ph:'<span class="mode-tag mt-ph">Phone</span>',
+  dt:'<span class="mode-tag mt-dt">Digital</span>',
+  ft:'<span class="mode-tag mt-ft">FT8/FT4</span>',
+  im:'<span class="mode-tag mt-im">Image</span>',
+  all:'<span class="mode-tag mt-all">All</span>',
+  ssb:'<span class="mode-tag mt-ph">SSB</span>',
+  fm:'<span class="mode-tag mt-all">FM</span>',
+};
+const BP_BANDS=[
+  {id:'160m',name:'160 Meters',range:'1.800–2.000 MHz',cc:'bc-160',tc:'bt-160',notes:'Low band, regional/NVIS. Shared with fixed & mobile services.',
+   segs:[
+    {lo:'1.800',hi:'2.000',modes:[MM.cw,MM.ph,MM.dt,MM.im],lic:[L.e,L.g,L.t],pwr:'1500 W PEP',note:'Full amateur allocation'},
+    {lo:'1.800',hi:'1.810',modes:[MM.dt],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'Digital weak signal'},
+    {lo:'1.843',hi:'2.000',modes:[MM.ph,MM.im],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'Phone & image subband'},
+  ]},
+  {id:'80m',name:'80 / 75 Meters',range:'3.500–4.000 MHz',cc:'bc-80',tc:'bt-80',notes:'Regional & NVIS. 80m = CW/digital; 75m = phone. Heavy traffic at night.',
+   segs:[
+    {lo:'3.500',hi:'3.600',modes:[MM.cw,MM.dt],lic:[L.e,L.g,L.t,L.n],pwr:'1500 W',note:'CW & digital; Novice/Tech CW: 3.525–3.600'},
+    {lo:'3.525',hi:'3.600',modes:[MM.cw,MM.dt],lic:[L.n,L.t],pwr:'200 W',note:'Novice/Tech CW & digital segment'},
+    {lo:'3.600',hi:'3.700',modes:[MM.cw,MM.ph,MM.dt],lic:[L.e,L.g],pwr:'1500 W',note:'Extra/General phone & CW'},
+    {lo:'3.700',hi:'3.800',modes:[MM.cw,MM.ph,MM.dt],lic:[L.e,L.g],pwr:'1500 W',note:'Extra/General phone'},
+    {lo:'3.800',hi:'4.000',modes:[MM.cw,MM.ph,MM.dt,MM.im],lic:[L.e,L.g],pwr:'1500 W',note:'General phone & image'},
+  ]},
+  {id:'60m',name:'60 Meters',range:'5 specific channels',cc:'bc-60',tc:'bt-60',notes:'USA only — secondary allocation. USB only. 100W ERP max. 5 channels.',
+   segs:[
+    {lo:'5330.5 kHz',hi:'5330.5 kHz',modes:[MM.ssb],lic:[L.e,L.g,L.t],pwr:'100 W ERP',note:'Ch 1 — USB only'},
+    {lo:'5346.5 kHz',hi:'5346.5 kHz',modes:[MM.ssb],lic:[L.e,L.g,L.t],pwr:'100 W ERP',note:'Ch 2'},
+    {lo:'5357.0 kHz',hi:'5357.0 kHz',modes:[MM.ssb],lic:[L.e,L.g,L.t],pwr:'100 W ERP',note:'Ch 3 — EMCOMM'},
+    {lo:'5371.5 kHz',hi:'5371.5 kHz',modes:[MM.ssb],lic:[L.e,L.g,L.t],pwr:'100 W ERP',note:'Ch 4'},
+    {lo:'5403.5 kHz',hi:'5403.5 kHz',modes:[MM.ssb],lic:[L.e,L.g,L.t],pwr:'100 W ERP',note:'Ch 5'},
+  ]},
+  {id:'40m',name:'40 Meters',range:'7.000–7.300 MHz',cc:'bc-40',tc:'bt-40',notes:'Workhorse DX band. NVIS during day; long-haul at night.',
+   segs:[
+    {lo:'7.000',hi:'7.025',modes:[MM.cw],lic:[L.e,L.g,L.t,L.n],pwr:'1500 W',note:'Extra CW DX window'},
+    {lo:'7.025',hi:'7.125',modes:[MM.cw,MM.dt],lic:[L.n,L.t],pwr:'200 W',note:'Novice/Tech CW & digital'},
+    {lo:'7.125',hi:'7.175',modes:[MM.cw,MM.ph,MM.dt],lic:[L.e,L.g],pwr:'1500 W',note:'General phone lower'},
+    {lo:'7.175',hi:'7.300',modes:[MM.cw,MM.ph,MM.dt,MM.im],lic:[L.e,L.g],pwr:'1500 W',note:'General/Extra phone & image'},
+  ]},
+  {id:'30m',name:'30 Meters',range:'10.100–10.150 MHz',cc:'bc-30',tc:'bt-30',notes:'WARC — no contests. CW & digital only. 200W max.',
+   segs:[
+    {lo:'10.100',hi:'10.130',modes:[MM.cw],lic:[L.e,L.g,L.t],pwr:'200 W',note:'CW only'},
+    {lo:'10.130',hi:'10.150',modes:[MM.cw,MM.dt],lic:[L.e,L.g,L.t],pwr:'200 W',note:'CW & digital — WSPR 10.140'},
+  ]},
+  {id:'20m',name:'20 Meters',range:'14.000–14.350 MHz',cc:'bc-20',tc:'bt-20',notes:'Premier DX band. Open worldwide most of the day during solar maximum.',
+   segs:[
+    {lo:'14.000',hi:'14.025',modes:[MM.cw],lic:[L.e],pwr:'1500 W',note:'Extra CW DX window'},
+    {lo:'14.025',hi:'14.150',modes:[MM.cw,MM.dt],lic:[L.e,L.g],pwr:'1500 W',note:'General CW & digital'},
+    {lo:'14.150',hi:'14.225',modes:[MM.cw,MM.ph,MM.dt,MM.im],lic:[L.e,L.g],pwr:'1500 W',note:'General/Extra phone'},
+    {lo:'14.225',hi:'14.350',modes:[MM.cw,MM.ph,MM.dt,MM.im],lic:[L.e,L.g],pwr:'1500 W',note:'Extra window — SSTV 14.230'},
+  ]},
+  {id:'17m',name:'17 Meters',range:'18.068–18.168 MHz',cc:'bc-17',tc:'bt-17',notes:'WARC — no contests. Quiet DX. General & above.',
+   segs:[
+    {lo:'18.068',hi:'18.110',modes:[MM.cw,MM.dt],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'CW & digital — FT8 at 18.100'},
+    {lo:'18.110',hi:'18.168',modes:[MM.cw,MM.ph,MM.dt,MM.im],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'Phone & image'},
+  ]},
+  {id:'15m',name:'15 Meters',range:'21.000–21.450 MHz',cc:'bc-15',tc:'bt-15',notes:'Excellent DX at solar peaks. Closes at night.',
+   segs:[
+    {lo:'21.000',hi:'21.025',modes:[MM.cw],lic:[L.e],pwr:'1500 W',note:'Extra CW DX window'},
+    {lo:'21.025',hi:'21.200',modes:[MM.cw,MM.dt],lic:[L.n,L.t],pwr:'200 W',note:'Novice/Tech CW & digital 200W'},
+    {lo:'21.200',hi:'21.225',modes:[MM.cw,MM.ph,MM.dt],lic:[L.e,L.g],pwr:'1500 W',note:'General phone lower'},
+    {lo:'21.225',hi:'21.450',modes:[MM.cw,MM.ph,MM.dt,MM.im],lic:[L.e,L.g],pwr:'1500 W',note:'General/Extra phone — SSTV 21.340'},
+  ]},
+  {id:'12m',name:'12 Meters',range:'24.890–24.990 MHz',cc:'bc-12',tc:'bt-12',notes:'WARC — no contests. Opens well near solar maximum.',
+   segs:[
+    {lo:'24.890',hi:'24.930',modes:[MM.cw,MM.dt],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'CW & digital — FT8 24.915'},
+    {lo:'24.930',hi:'24.990',modes:[MM.cw,MM.ph,MM.dt,MM.im],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'Phone & image'},
+  ]},
+  {id:'10m',name:'10 Meters',range:'28.000–29.700 MHz',cc:'bc-10',tc:'bt-10',notes:'Wide band, active at solar peaks. FM simplex at 29.600. Novice/Tech full access.',
+   segs:[
+    {lo:'28.000',hi:'28.070',modes:[MM.cw],lic:[L.e,L.g,L.t,L.n],pwr:'200 W (N/T)',note:'CW only'},
+    {lo:'28.070',hi:'28.150',modes:[MM.dt],lic:[L.e,L.g,L.t,L.n],pwr:'200 W (N/T)',note:'Digital — FT8 at 28.074'},
+    {lo:'28.150',hi:'28.300',modes:[MM.cw,MM.dt],lic:[L.e,L.g,L.t,L.n],pwr:'200 W (N/T)',note:'CW & digital'},
+    {lo:'28.300',hi:'28.500',modes:[MM.ph,MM.im],lic:[L.e,L.g,L.t,L.n],pwr:'200 W (N/T)',note:'Novice/Tech SSB'},
+    {lo:'28.500',hi:'29.700',modes:[MM.all],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'All modes — FM simplex 29.600'},
+  ]},
+  {id:'6m',name:'6 Meters — Magic Band',range:'50.000–54.000 MHz',cc:'bc-6',tc:'bt-6',notes:'Technician full access. E-skip in summer. SSB calling 50.125.',
+   segs:[
+    {lo:'50.000',hi:'50.100',modes:[MM.cw,MM.dt],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'Weak signal — FT8 at 50.313'},
+    {lo:'50.100',hi:'50.300',modes:[MM.cw,MM.ph],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'SSB DX calling 50.125'},
+    {lo:'50.300',hi:'51.000',modes:[MM.all],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'Mixed modes & digital'},
+    {lo:'51.000',hi:'54.000',modes:[MM.all,MM.fm],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'FM repeaters & simplex'},
+  ]},
+  {id:'2m',name:'2 Meters',range:'144.000–148.000 MHz',cc:'bc-2',tc:'bt-2',notes:'Most popular VHF. Technician full access. FM calling 146.520.',
+   segs:[
+    {lo:'144.000',hi:'144.100',modes:[MM.cw],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'Weak signal CW / EME'},
+    {lo:'144.100',hi:'144.300',modes:[MM.cw,MM.ph],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'SSB calling 144.200'},
+    {lo:'144.300',hi:'144.500',modes:[MM.cw,MM.ph,MM.dt],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'Digital — FT8 at 144.174'},
+    {lo:'145.000',hi:'147.000',modes:[MM.fm],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'FM repeaters'},
+    {lo:'146.520',hi:'146.520',modes:[MM.fm],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'National FM calling'},
+    {lo:'147.000',hi:'148.000',modes:[MM.fm],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'FM repeaters & simplex'},
+  ]},
+  {id:'70cm',name:'70 Centimeters',range:'420–450 MHz',cc:'bc-70',tc:'bt-70',notes:'Technician full access. Repeaters, weak signal, satellite. Shared with govt.',
+   segs:[
+    {lo:'420.000',hi:'426.000',modes:[MM.all],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'ATV & mixed modes'},
+    {lo:'432.000',hi:'433.000',modes:[MM.cw,MM.ph,MM.dt],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'Weak signal — SSB calling 432.100'},
+    {lo:'435.000',hi:'438.000',modes:[MM.all],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'Satellite — no repeater links'},
+    {lo:'438.000',hi:'444.000',modes:[MM.fm],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'FM repeater inputs'},
+    {lo:'444.000',hi:'450.000',modes:[MM.fm],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'FM repeater outputs'},
+  ]},
+  {id:'33cm',name:'33 Centimeters',range:'902–928 MHz',cc:'bc-33',tc:'bt-33',notes:'Secondary. Shared with ISM. USA only — check ISED for Canada.',
+   segs:[
+    {lo:'902.000',hi:'903.000',modes:[MM.cw,MM.ph,MM.dt],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'Weak signal subband'},
+    {lo:'903.000',hi:'928.000',modes:[MM.all],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'All modes — FM & digital'},
+  ]},
+  {id:'23cm',name:'23 Centimeters',range:'1240–1300 MHz',cc:'bc-23',tc:'bt-23',notes:'Microwave band. Shared with radionavigation.',
+   segs:[
+    {lo:'1240.000',hi:'1246.000',modes:[MM.all],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'ATV & digital'},
+    {lo:'1246.000',hi:'1252.000',modes:[MM.fm],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'FM repeaters'},
+    {lo:'1295.000',hi:'1300.000',modes:[MM.cw,MM.ph,MM.dt],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'Weak signal — calling 1296.100 SSB'},
+  ]},
+  {id:'13cm',name:'13 Centimeters',range:'2300–2450 MHz',cc:'bc-13',tc:'bt-13',notes:'Secondary. Shared with ISM (Wi-Fi, Bluetooth). Experimental use.',
+   segs:[
+    {lo:'2300.000',hi:'2310.000',modes:[MM.cw,MM.ph,MM.dt],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'Weak signal subband'},
+    {lo:'2390.000',hi:'2450.000',modes:[MM.all],lic:[L.e,L.g,L.t],pwr:'1500 W',note:'All modes — heavy ISM interference'},
+  ]},
+];
+
+const CA_NOTES={'60m':'Canada does not have a 60m allocation — USA only.','33cm':'Canada: 902–928 MHz secondary; check ISED for regional restrictions.'};
+
+function renderBandPlan(){
+  let html='';
+  BP_BANDS.forEach(b=>{
+    const caNote=bpRegion==='CA'&&CA_NOTES[b.id];
+    html+=`<div class="band-block" id="band-bp-${b.id}">
+      <div class="band-title ${b.cc}">
+        <span class="${b.tc}" style="font-size:15px">${b.name}</span>
+        <span class="band-title-right ${b.tc}">${b.range}</span>
+      </div>
+      <table class="seg-table"><thead><tr>
+        <th style="min-width:130px">Frequency</th>
+        <th>Modes</th><th>License</th><th>Power</th><th>Notes</th>
+      </tr></thead><tbody>`;
+    b.segs.forEach(s=>{
+      const fq=s.lo===s.hi?s.lo:s.lo+'–'+s.hi;
+      const licHtml=bpRegion==='CA'?s.lic.map(l=>l===L.e||l===L.adv?L.ca+' '+L.adv:l===L.g||l===L.t?L.ca:l===L.n?'':l).filter(Boolean).join(' '):s.lic.join(' ');
+      html+=`<tr><td><span class="freq-range">${fq}</span></td><td>${s.modes.join(' ')}</td><td>${licHtml}</td><td class="pwr">${s.pwr}</td><td style="color:var(--txd);font-size:12px">${s.note}</td></tr>`;
+    });
+    html+=`</tbody></table>`;
+    html+=`<div class="note-box">${caNote||b.notes}</div>`;
+    html+=`</div>`;
+  });
+  document.getElementById('bp-content').innerHTML=html;
+}
+
+const QREF=[
+  {band:'80m / 75m',entries:[{f:'3.573',d:'FT8'},{f:'3.710',d:'Novice/Tech phone'},{f:'3.845',d:'SSTV (USB)'},{f:'3.885',d:'AM calling'}]},
+  {band:'60m (USA)',entries:[{f:'5330.5',d:'Ch 1 USB'},{f:'5346.5',d:'Ch 2 USB'},{f:'5357.0',d:'Ch 3 EMCOMM'},{f:'5371.5',d:'Ch 4 USB'},{f:'5403.5',d:'Ch 5 USB'}]},
+  {band:'40m',entries:[{f:'7.030',d:'CW QRP calling'},{f:'7.074',d:'FT8'},{f:'7.171',d:'SSTV'},{f:'7.200',d:'SSB DX calling'},{f:'7.290',d:'AM calling'}]},
+  {band:'30m',entries:[{f:'10.106',d:'CW QRP calling'},{f:'10.130',d:'WSPR beacon'},{f:'10.140',d:'FT8 / digital'}]},
+  {band:'20m',entries:[{f:'14.025',d:'CW QRP calling'},{f:'14.074',d:'FT8'},{f:'14.100',d:'NCDXF beacon'},{f:'14.225',d:'SSTV (USB)'},{f:'14.300',d:'Maritime net'}]},
+  {band:'17m',entries:[{f:'18.100',d:'FT8'},{f:'18.130',d:'SSB QRP calling'}]},
+  {band:'15m',entries:[{f:'21.074',d:'FT8'},{f:'21.150',d:'CW calling'},{f:'21.340',d:'SSTV'},{f:'21.385',d:'SSB QRP'}]},
+  {band:'12m',entries:[{f:'24.915',d:'FT8'},{f:'24.950',d:'SSB calling'}]},
+  {band:'10m',entries:[{f:'28.074',d:'FT8'},{f:'28.120',d:'CW QRP'},{f:'28.400',d:'SSB calling'},{f:'28.680',d:'SSTV'},{f:'29.000',d:'AM calling'},{f:'29.600',d:'FM simplex'}]},
+  {band:'6m',entries:[{f:'50.125',d:'SSB DX calling'},{f:'50.313',d:'FT8'},{f:'52.525',d:'FM simplex'}]},
+  {band:'2m',entries:[{f:'144.174',d:'FT8'},{f:'144.200',d:'SSB national calling'},{f:'146.520',d:'FM national calling'},{f:'146.580',d:'FM simplex'}]},
+  {band:'70cm',entries:[{f:'432.100',d:'SSB national calling'},{f:'446.000',d:'FM national simplex'}]},
+];
+
+function renderQRef(){
+  let html='';
+  QREF.forEach(g=>{
+    html+=`<div style="margin-bottom:18px"><div style="font-family:var(--disp);font-size:13px;color:var(--am);letter-spacing:1.5px;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--br)">${g.band}</div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr>
+    <th style="font-size:11px;color:var(--txd);text-align:left;padding:5px 10px;font-weight:400;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--br)">Freq (MHz)</th>
+    <th style="font-size:11px;color:var(--txd);text-align:left;padding:5px 10px;font-weight:400;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--br)">Use</th>
+    </tr></thead><tbody>`;
+    g.entries.forEach(e=>{html+=`<tr><td style="padding:7px 10px;color:var(--am);white-space:nowrap;font-size:13px">${e.f}</td><td style="padding:7px 10px;color:var(--tx);font-size:13px">${e.d}</td></tr>`;});
+    html+=`</tbody></table></div>`;
+  });
+  document.getElementById('qr-content').innerHTML=html;
+}
+
+renderBandPlan();
+renderQRef();</script>
+</body>
+</html>
