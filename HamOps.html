@@ -58,7 +58,7 @@
     .bar-fill{height:100%;border-radius:5px;transition:width .6s}
     .band-pct{min-width:34px;text-align:right;font-size:11px;color:var(--tx)}
     .band-cd{min-width:48px;font-size:10px;text-align:right}
-    .noise-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+    .noise-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
     .ncard{background:var(--s2);border:1px solid var(--brl);border-radius:6px;padding:12px;text-align:center}
     .ncard-band{font-family:var(--disp);font-size:15px;font-weight:600;color:var(--g)}
     .ncard-s{font-size:22px;font-weight:700;margin:4px 0}
@@ -189,7 +189,7 @@
       .g2{grid-template-columns:1fr}
       .solar-grid{grid-template-columns:repeat(2,1fr)}
       .muf-main{grid-template-columns:1fr 1fr}
-      .noise-grid{grid-template-columns:1fr}
+      .noise-grid{grid-template-columns:repeat(3,1fr)}
       .cs-grid{grid-template-columns:1fr}
       .cs-field:nth-child(odd){border-right:none}
       .band-muf-grid{grid-template-columns:repeat(3,1fr)}
@@ -339,7 +339,7 @@
   <div class="hdr">
     <div style="display:flex;align-items:baseline;gap:8px">
       <div class="logo">Ham<em>Ops</em></div>
-      <div style="font-size:10px;color:var(--txd);font-family:var(--mono);letter-spacing:.5px">from KJ5MJD</div>
+      <div style="font-size:10px;color:var(--txd);font-family:var(--mono);letter-spacing:.5px">de KJ5MJD</div>
     </div>
     <div class="sbars"><span></span><span></span><span></span><span></span></div>
     <div class="utc">UTC&nbsp;<b id="clk">--:--:--</b></div>
@@ -395,11 +395,13 @@
       </div>
       <div class="sec">HF BAND PROPAGATION</div>
       <div id="band-bars"><div style="font-size:12px;color:var(--txd)">Fetching…</div></div>
-      <div class="sec" style="margin-top:16px">NOISE FLOOR — 10m / 20m / 40m</div>
+      <div class="sec" style="margin-top:16px">NOISE FLOOR — 80m / 40m / 20m / 15m / 10m</div>
       <div class="noise-grid">
-        <div class="ncard"><div class="ncard-band">10m</div><div class="ncard-s" id="n10s">--</div><div class="ncard-db" id="n10d">--</div><div class="ncard-lv" id="n10l">…</div></div>
-        <div class="ncard"><div class="ncard-band">20m</div><div class="ncard-s" id="n20s">--</div><div class="ncard-db" id="n20d">--</div><div class="ncard-lv" id="n20l">…</div></div>
+        <div class="ncard"><div class="ncard-band">80m</div><div class="ncard-s" id="n80s">--</div><div class="ncard-db" id="n80d">--</div><div class="ncard-lv" id="n80l">…</div></div>
         <div class="ncard"><div class="ncard-band">40m</div><div class="ncard-s" id="n40s">--</div><div class="ncard-db" id="n40d">--</div><div class="ncard-lv" id="n40l">…</div></div>
+        <div class="ncard"><div class="ncard-band">20m</div><div class="ncard-s" id="n20s">--</div><div class="ncard-db" id="n20d">--</div><div class="ncard-lv" id="n20l">…</div></div>
+        <div class="ncard"><div class="ncard-band">15m</div><div class="ncard-s" id="n15s">--</div><div class="ncard-db" id="n15d">--</div><div class="ncard-lv" id="n15l">…</div></div>
+        <div class="ncard"><div class="ncard-band">10m</div><div class="ncard-s" id="n10s">--</div><div class="ncard-db" id="n10d">--</div><div class="ncard-lv" id="n10l">…</div></div>
       </div>
       <div class="rbox" id="summary" style="margin-top:12px;font-size:11px;color:var(--txd);line-height:1.8">Fetching solar data…</div>
     </div>
@@ -551,8 +553,16 @@ function sw(id,btn){
 const PROXIES=[
   url=>'https://corsproxy.io/?url='+encodeURIComponent(url),
   url=>'https://api.allorigins.win/raw?url='+encodeURIComponent(url),
+  url=>'https://thingproxy.freeboard.io/fetch/'+url,
+  url=>'https://cors-anywhere.herokuapp.com/'+url,
 ];
 async function corsGet(url){
+  // First try direct fetch (works in WKWebView / native app context)
+  try{
+    const r=await fetch(url,{signal:AbortSignal.timeout(7000)});
+    if(r.ok)return await r.text();
+  }catch(e){}
+  // Then try each CORS proxy
   for(const p of PROXIES){
     try{const r=await fetch(p(url),{signal:AbortSignal.timeout(9000)});if(r.ok)return await r.text();}catch(e){}
   }
@@ -567,17 +577,51 @@ async function loadAll(){
   btn.disabled=false;btn.textContent='↻ REFRESH';
   document.getElementById('ts').textContent='Updated '+new Date().toLocaleTimeString();
 }
-async function loadSolar(){
-  const xml=await corsGet('https://www.hamqsl.com/solarxml.php');
-  if(xml){
-    try{
+// Solar data sources — tried in order until one succeeds
+const SOLAR_SOURCES=[
+  {
+    url:'https://www.hamqsl.com/solarxml.php',
+    parse:xml=>{
       const doc=new DOMParser().parseFromString(xml,'text/xml');
       const g=t=>doc.getElementsByTagName(t)[0]?.textContent||'';
-      renderSolar({sfi:parseFloat(g('solarflux'))||0,ki:parseFloat(g('kindex'))||0,
-        ai:parseFloat(g('aindex'))||0,sn:parseFloat(g('sunspots'))||0,
-        xray:g('xray'),updated:g('updated'),src:'HamQSL'});
-    }catch(e){solarFallback('XML parse error');}
-  }else{solarFallback('Could not reach HamQSL — estimated values shown.');}
+      const sfi=parseFloat(g('solarflux'));
+      if(!sfi)throw new Error('no sfi');
+      return{sfi,ki:parseFloat(g('kindex'))||0,ai:parseFloat(g('aindex'))||0,
+        sn:parseFloat(g('sunspots'))||0,xray:g('xray'),updated:g('updated'),src:'HamQSL'};
+    }
+  },
+  {
+    url:'https://solar.w5mmw.net/solar.json',
+    parse:json=>{
+      const d=JSON.parse(json);
+      return{sfi:parseFloat(d.solarflux||d.sfi)||0,ki:parseFloat(d.kindex||d.ki)||0,
+        ai:parseFloat(d.aindex||d.ai)||0,sn:parseFloat(d.sunspots||d.sn)||0,
+        xray:d.xray||'',updated:d.updated||'',src:'W5MMW'};
+    }
+  },
+  {
+    url:'https://www.hamqsl.com/solar101.php',
+    parse:html=>{
+      // Parse SFI from the solar banner page as last resort
+      const m=html.match(/SFI=(\d+)/i)||html.match(/Solar Flux.*?(\d{2,3})/i);
+      const k=html.match(/K-Index.*?(\d)/i)||html.match(/Kindex.*?(\d)/i);
+      if(!m)throw new Error('no sfi');
+      return{sfi:parseFloat(m[1])||0,ki:parseFloat(k?k[1]:2)||0,ai:0,sn:0,
+        xray:'',updated:'',src:'HamQSL-banner'};
+    }
+  },
+];
+async function loadSolar(){
+  for(const source of SOLAR_SOURCES){
+    const txt=await corsGet(source.url);
+    if(txt){
+      try{
+        const sol=source.parse(txt);
+        if(sol.sfi>0){renderSolar(sol);return;}
+      }catch(e){}
+    }
+  }
+  solarFallback('Could not reach any solar data source — using estimated Cycle 25 values.');
 }
 function solarFallback(msg){
   const el=document.getElementById('err-box');
@@ -650,7 +694,7 @@ const HFBANDS=[
   {nm:'40m',sfiW:.13,bD:.55,bN:.6,gW:.4},{nm:'30m',sfiW:.2,bD:.5,bN:.42,gW:.38},
   {nm:'20m',sfiW:.3,bD:.62,bN:.38,gW:.33},{nm:'17m',sfiW:.4,bD:.52,bN:.28,gW:.28},
   {nm:'15m',sfiW:.5,bD:.45,bN:.18,gW:.25},{nm:'12m',sfiW:.62,bD:.3,bN:.08,gW:.22},
-  {nm:'10m',sfiW:.75,bD:.2,bN:.04,gW:.2},
+  {nm:'10m',sfiW:.75,bD:.2,bN:.04,gW:.2},{nm:'6m',sfiW:.85,bD:.1,bN:.02,gW:.15},
 ];
 function isDay(){const h=new Date().getUTCHours();return h>=10&&h<=22;}
 function renderSolar(sol){
@@ -671,7 +715,13 @@ function renderSolar(sol){
     h+=`<div class="band-row"><span class="band-nm">${b.nm}</span><div class="bar-bg"><div class="bar-fill" style="width:${p}%;background:${col}"></div></div><span class="band-pct">${p}%</span><span class="band-cd">${cond}</span></div>`;
   });
   document.getElementById('band-bars').innerHTML=h;
-  const bds=[{id:'10',base:-132,sfiK:.07,kiK:2},{id:'20',base:-126,sfiK:.04,kiK:3.5},{id:'40',base:-119,sfiK:.015,kiK:6}];
+  const bds=[
+    {id:'80', base:-120,sfiK:.02,kiK:7},
+    {id:'40', base:-119,sfiK:.015,kiK:6},
+    {id:'20', base:-126,sfiK:.04,kiK:3.5},
+    {id:'15', base:-129,sfiK:.06,kiK:2.5},
+    {id:'10', base:-132,sfiK:.07,kiK:2},
+  ];
   bds.forEach(b=>{
     const db=Math.round(b.base+(sfi-100)*b.sfiK+ki*b.kiK);
     const sv=db>=-73?9:Math.max(1,Math.round(9+(db+73)/6));
@@ -712,13 +762,18 @@ function freqToBand(f){
   if(f>=420000&&f<=450000)return'70cm';return'other';
 }
 function detectMode(c,f){
+  // f is in kHz
   const u=(c||'').toUpperCase();
   if(/\bFT8\b/.test(u))return'FT8';if(/\bFT4\b/.test(u))return'FT4';
   if(/\bCW\b/.test(u))return'CW';if(/\bSSB\b|USB|LSB/.test(u))return'SSB';
   if(/\bRTTY\b/.test(u))return'RTTY';if(/PSK/.test(u))return'PSK';
   if(/\bAM\b/.test(u))return'AM';if(/\bFM\b/.test(u))return'FM';
-  if(f>=14074&&f<=14076||f>=7074&&f<=7076||f>=21074&&f<=21076||f>=28074&&f<=28076)return'FT8';
-  if(f>=14080&&f<=14082)return'FT4';return'';
+  if(/\bDIGI\b|\bDIGITAL\b/.test(u))return'FT8';
+  // Frequency-based mode detection (kHz)
+  if((f>=14074&&f<=14076)||(f>=7074&&f<=7076)||(f>=21074&&f<=21076)||(f>=28074&&f<=28076)||(f>=50313&&f<=50315)||(f>=144174&&f<=144176))return'FT8';
+  if((f>=14080&&f<=14082)||(f>=7047&&f<=7049)||(f>=21140&&f<=21142))return'FT4';
+  if(f>=29600&&f<=29601)return'FM';
+  return'';
 }
 function modeClass(m){
   const u=(m||'').toUpperCase();
@@ -750,13 +805,33 @@ async function loadDX(){
       const lines=csv.trim().split('\n').filter(l=>l.trim());
       allSpots=lines.map(line=>{
         const p=line.split('^');
-        const freq=p[1]||'',fv=parseFloat(freq)||0,comment=p[4]||'';
-        return{call:p[0]||'',freq:fv,dt:p[2]||'',spotter:p[3]||'',comment,
-          lotw:p[5]==='1',band:p[8]||freqToBand(fv),country:p[9]||'',mode:detectMode(comment,fv)};
+        const rawFreq=parseFloat(p[1]||'0')||0;
+        // HamQTH sends kHz — but some spots arrive in Hz (>1,000,000) or MHz (<1000)
+        // Normalise everything to kHz
+        let fv=rawFreq;
+        if(rawFreq>1000000) fv=rawFreq/1000;      // Hz → kHz
+        else if(rawFreq>0&&rawFreq<500) fv=rawFreq*1000; // MHz → kHz
+        const comment=p[4]||'';
+        // Use band field from CSV if present and valid, otherwise derive from freq
+        const csvBand=(p[8]||'').trim().toLowerCase();
+        const validBands=['160m','80m','60m','40m','30m','20m','17m','15m','12m','10m','6m','2m','70cm','33cm','23cm','13cm'];
+        const band=validBands.includes(csvBand)?csvBand:freqToBand(fv);
+        return{
+          call:(p[0]||'').trim(),
+          freq:fv,
+          freqDisplay:fv.toFixed(1),
+          dt:p[2]||'',
+          spotter:(p[3]||'').trim(),
+          comment,
+          lotw:p[5]==='1',
+          band,
+          country:(p[9]||'').trim(),
+          mode:detectMode(comment,fv)
+        };
       }).filter(s=>s.call&&s.freq>0);
       renderDX();
       document.getElementById('dx-ts').textContent='Updated '+new Date().toLocaleTimeString()+' · HamQTH ('+allSpots.length+')';
-    }catch(e){dxFallback('Parse error');}
+    }catch(e){dxFallback('Parse error: '+e.message);}
   }else{dxFallback('Could not reach DX cluster.');}
   btn.disabled=false;btn.textContent='↻ REFRESH';
 }
@@ -790,7 +865,7 @@ function renderDX(){
     bspots.forEach(s=>{
       const mc=modeClass(s.mode),age=spotAge(s.dt),lotw=s.lotw?'<span style="font-size:11px;color:var(--g);margin-left:4px">L</span>':'';
       html+=`<tr><td><span class="dx-call" style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted" onclick="lookupFromDX('${s.call}')">${s.call}</span>${lotw}${s.country?`<br><span style="font-size:11px;color:var(--txd)">${s.country}</span>`:''}</td>
-      <td><span class="dx-freq">${s.freq.toFixed(1)}</span></td>
+      <td><span class="dx-freq">${s.freqDisplay||s.freq.toFixed(1)}</span></td>
       <td><span class="dx-mode ${mc}">${s.mode||'—'}</span></td>
       <td class="dx-spotter">${s.spotter}</td>
       <td class="dx-comment" title="${s.comment}">${s.comment||'—'}</td>
